@@ -7,6 +7,13 @@ const https = require('https');
 const { spawn } = require('child_process');
 const deezLoader = spawn('Deezloader Remix 4.4.0.exe', ['-s']);
 
+let httpPlaylistTemplate = `
+POST http://localhost:1730/api/tracks/
+Content-Type: application/json
+
+{
+    "spotifyplaylist": "REPLACE"
+}`
 
 
 //Initialise stuff
@@ -20,7 +27,8 @@ const readline = require('readline').createInterface({
 function main(args){
     
     
-    readline.question(deezLoader.pid, (name) => {
+    readline.question('Entrer un nom de playlist spotify.', (nom) => {
+        spotifyPlaylistResults(nom);
         console.log('Execution repartie');
         cleanupDeezLoader(deezLoader);
         readline.close();
@@ -33,9 +41,27 @@ function main(args){
 }
 
 main();
+//TODO : complete this, see dox to prepare post properly 
+//https://nodejs.org/api/http.html#http_http_request_url_options_callback
+//gets a spotify playlist tracklist then returns the tracknames
+function spotifyPlaylistResults(query){
+    let httpRequest = httpPlaylistTemplate.replace("REPLACE",query);
+    https.get(query, (resp) => {
+    let data = '';
 
-function spotifyPlaylistResults(){
+    // A chunk of data has been recieved.
+    resp.on('data', (chunk) => {
+        data += chunk;
+    });
 
+    // The whole response has been received. Print out the result.
+    resp.on('end', () => {
+        console.log(JSON.parse(data).explanation);
+    });
+
+    }).on("error", (err) => {
+    console.log("Error: " + err.message);
+    });
 }
 
 //Because deezloader somehow spawns 3 processes
@@ -53,3 +79,4 @@ function cleanupDeezLoader(initialProcess){
   //TODO: Compare with currently dl'd files or last version of playlist 
   //TODO: AutoAnalyse files with beaTunes
   //TODO: Add option to point output directory for downloads, move to usb key/network location or whatnot
+  //TODO: Make a UI/proper CLI ?
